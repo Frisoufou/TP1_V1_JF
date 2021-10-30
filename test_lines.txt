@@ -1,0 +1,7 @@
+python my_player.py --bind localhost --port 8000
+
+python greedy_player.py --bind localhost --port 8090
+
+python game.py http://localhost:8000 http://localhost:8090 --time 300
+
+http://becool.info.ucl.ac.be/aigames/quoridor2013
