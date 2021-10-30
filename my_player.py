@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quoridor agent.
+Quoridor agents.
 Copyright (C) 2013, <<<<<<<<<<< YOUR NAMES HERE >>>>>>>>>>>
 
 This program is free software; you can redistribute it and/or modify
