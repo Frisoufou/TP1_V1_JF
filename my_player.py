@@ -21,6 +21,62 @@ from quoridor import *
 import NotAllowedError as exceptions
 import heuristic_state as hs
 import minimax
+import log as log
+import math
+from minimax import heuristic
+
+def manhattanDistance(x1, y1, x2, y2):
+    "Returns the Manhattan distance between points xy1 and xy2"
+    return abs( x2 - x1 ) + abs( y2 - y1 )
+
+def possible_moves(player_curr_position, expected_move):
+
+    if (expected_move == 'up' or expected_move == 'down' or expected_move == 'left' or expected_move == 'right'):
+
+        move = {'up':('P', player_curr_position[0] - 1, player_curr_position[1]),
+            'down':('P', player_curr_position[0] + 1, player_curr_position[1]),
+            'left':('P', player_curr_position[0], player_curr_position[1] - 1),
+            'right':('P', player_curr_position[0], player_curr_position[1] + 1)}
+
+        return move[expected_move]
+
+    else:
+        raise ValueError('Expected move in possible_moves input function was wrong')
+
+    
+
+def wall_move_choice(board, player): ##### Wall function from greedy_player #### TO MODIFY
+
+        # opponent position
+        oppo_y, oppo_x = board.pawns[1-player]
+        # opponent goal
+        oppo_goal_y = board.goals[1-player]
+        # set of legal wall moves
+        wall_actions = board.get_legal_wall_moves(player)
+
+        # find valid walls in front of opponent
+        candidate_walls = []
+        if oppo_goal_y < oppo_y:
+            print("opponent moving north")
+            for wall_action in wall_actions:
+                wall_dir, wall_y, wall_x = wall_action
+                if wall_dir == 'WH' and wall_y == oppo_y - 1 and wall_x in (oppo_x, oppo_x - 1):
+                    candidate_walls.append(wall_action)
+        else:
+            print("opponent moving south")
+            for wall_action in wall_actions:
+                wall_dir, wall_y, wall_x = wall_action
+                if wall_dir == 'WH' and wall_y == oppo_y and wall_x in (oppo_x, oppo_x - 1):
+                    candidate_walls.append(wall_action)
+        print(f"candidate walls: {candidate_walls}")
+
+        if len(candidate_walls) > 0:
+            choice = random.choice(candidate_walls)
+            print(f"placing a wall: {choice}")
+            return choice
+        else:
+            return "minimax"
+
 
 class MyAgent(Agent):
 
@@ -69,7 +125,8 @@ class MyAgent(Agent):
     def next_actions(self, state):
 
         """
-        Function that returns a actions to obtain a certain state. 
+        Function that returns a actions to obtain a certain state.  
+        Add Heuristic
         """
         board, player = state # Get board and player with regards to a certain state
         player_to_move = (player + 1) % 2
@@ -84,22 +141,61 @@ class MyAgent(Agent):
 
             yield(move, result_state)
 
-    def bool_minimax(self, state, depth):
+    def bool_minimax(self, step, board, depth, time_left):
         """
         Function that returns True is minimax search stopped (e.g if board is finished)
         """
-        board, player = state
-        if board.is_finished() or depth == 2:
-            return True
-        else:
-            return False
 
-    def player_score(self, state):
+        if time_left < 20 :
+
+            return depth >= 1 or board.is_finished()
+
+        # If begining of the game or lower than 3 minutes
+        if step <= 6 or time_left < 180 :
+
+            return depth >= 2 or board.is_finished()
+
+        return depth >= 3 or board.is_finished()
+
+        #board, player = state
+        #if board.is_finished() or depth == 2:
+        ##    return True
+        #else:
+        #    return False
+
+    def player_score_heuristic_1(self, board, player, play):
         """
         Function that evaluates a current player's score according to a given game state
         """
-        board, player = state
-        return board.get_score(player) # From given function with TP2 documents
+
+        # TO BE IMPORTED IN HEURISTIC IN MINIMAX.PY
+
+        #### Version plus détaillée #### TO MODIFY
+        #board, player = state
+
+        #minStepsMe = board.min_steps_before_victory(self.player)
+        #minStepsHim = board.min_steps_before_victory((self.player+1)%2)
+        
+        #diffMinSteps =  minStepsHim - minStepsMe
+
+        #maxPath = 30
+
+        #score  = 1*diffMinSteps/maxPath 
+
+        #score += 0.1 * ((board.nb_walls[self.player]/10) - (board.nb_walls[(self.player+1)%2]/10))
+
+        #if board.nb_walls[self.player] == 0 and minStepsMe < minStepsHim:
+        #    score -= 1
+        #if board.nb_walls[(self.player+1)%2] == 0 and minStepsMe > minStepsHim:
+        #    score += 1
+
+        #if board.is_finished() :
+#
+        #    if player == self.player : score -= 9000
+         #   else : score += 9000
+
+        #return (int) (score*10000)
+        
 
     def play(self, percepts, player, step, time_left):
         """
@@ -122,13 +218,103 @@ class MyAgent(Agent):
         print("player:", player)
         print("step:", step)
         print("time left:", time_left if time_left else '+inf')
-        
+
+        #log_test = log.logfile("testing_log")
+        #log_test.info("Game started")
+
         # TODO: implement your agent and return an action for the current step.
+
+        player_curr_position = percepts['pawns'][player]
         self.player = player
-        state = (dict_to_board(percepts), player)
-        return minimax.search(state, self)
+        board = dict_to_board(percepts)
+        state = (board, player)
+
+        # Printing some game informations
+        print("test player 0 : " + str(board.nb_walls[0]))
+        print("test player 1 : " + str(board.nb_walls[1]))
+        print("Time left : " + str(time_left))
         
+        # Getting information about current game state
+        dict_heuristic = {}
+        player1_walls = board.nb_walls[0]
+        player2_walls = board.nb_walls[1]
+        time_left = time_left
+
+        # Getting manhattan distance between current my_player position and goal
+        (x_init, y_init) = board.get_shortest_path(self.player)[0]
+        (x_goal, y_goal) = board.get_shortest_path(self.player)[-1]
+        distance_my_player = manhattanDistance(x_init, y_init, x_goal, y_goal)
+
+        # Getting manhattan distance between current player position and goal
+        (x_init, y_init) = board.get_shortest_path(1 - self.player)[0]
+        (x_goal, y_goal) = board.get_shortest_path(1 - self.player)[-1]
+        distance_player = manhattanDistance(x_init, y_init, x_goal, y_goal)
+        
+        # Creating current game state dictionnary for heuristic_state.py class input
+        dict_heuristic["Player1_shortest_path"] =  distance_my_player
+        dict_heuristic["Player2_shortest_path"] = distance_player
+        dict_heuristic["Step"] = step
+        dict_heuristic["time"] = time_left
+        dict_heuristic["Player1_walls"] = player1_walls
+        dict_heuristic["Player2_walls"] = player2_walls
+
+        shortest_path_player = board.get_shortest_path(player)
+        if (len(shortest_path_player) == 1):
+
+            if player == 0:
+                
+                action = possible_moves(player_curr_position, 'down')
+                if (board.is_action_valid(action, player)):
+                    print("win possible")
+                    print(action)
+                    return action
+                else:
+                    return minimax.search(board, player, dict_heuristic, time_left,  step, heuristic)
+
+            elif player == 1:
+
+                action =  possible_moves(player_curr_position, 'up')
+                if (board.is_action_valid(action, 1 - player)):
+                    print("win possible")
+                    print(action)
+                    return action
+                else:
+                    return minimax.search(board, player, dict_heuristic, time_left,  step, heuristic)
+
+            else:
+
+                raise ValueError('Value error encounter when processing len(shortest_path_player) in my_player.py')
 
 
+        # Calling heuristic_state.py class to determine what the next action should be, based on current game information thru dict_heuristic
+        action = hs.heuristic.switch_heuristic(dict_heuristic)
+
+        # Switch depending on prescribed action fro switch_heuristic
+        if (action == "EarlyMove"):
+
+            (x, y) = board.get_shortest_path(self.player)[0]
+            return ('P', x, y)
+
+        elif (action == "WallMove"):
+            
+            choice = wall_move_choice(board, player)
+            if (choice == "minimax"):
+
+                return minimax.search(board, player, dict_heuristic, time_left,  step, heuristic)
+
+            else:
+
+                return choice
+
+        elif (action == "MonteCarlo"):
+
+            print("To be implemented")
+
+            pass
+
+        else:
+
+            return minimax.search(board, player, dict_heuristic, time_left,  step, heuristic)
+    
 if __name__ == "__main__":
     agent_main(MyAgent())

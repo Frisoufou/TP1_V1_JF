@@ -1,30 +1,44 @@
+import minimax
+from quoridor import *
+
+def manhattanDistance(xy1, xy2):
+    "Returns the Manhattan distance between points xy1 and xy2"
+    return abs( xy1[0] - xy2[0] ) + abs( xy1[1] - xy2[1] )
+
 class heuristic:
 
     def __init__(self):
 
-        self._current_state = []
-        pass
-    
-    def switch_heuristic(self, game_state):
+        self._current_state = {}
+        self._game_state = ""
+
+
+    def switch_heuristic(dict_heuristic):
+
+        condition = False # For structure to implement
         
-        if game_state == "Early Game":
+        if (dict_heuristic["Step"] < 3 and dict_heuristic["Player1_walls"] + dict_heuristic["Player2_walls"] == 20): # Early game heuristic
+            
+            _game_state = "EarlyGame"
+            print("Early move")
+            return "EarlyMove"
 
-            early_heuristic = ""
-
-            return early_heuristic
-
-        elif game_state == "Mid Game":
-
-            Mid_heuristic = ""
-
-            return Mid_heuristic
+        elif (condition):
+             
+             _game_state = "MonteCarlo"
+             print("MonteCarlo move")
+             return "MonteCarlo"
         
-        elif game_state == "Late Game":
+        elif (condition):
+             
+             _game_state = "DifferentState"
+             print("AnotherTypeOfDecision")
+             return "SomethingToBeImplemented"
 
-            Late_heuristic = ""
+        else: # Minimax algo 
 
-            return Late_heuristic
+            _game_state = "MiniMax"
+            print("Minimax move")
+            return "MiniMax"
 
-        # Implement other heuristics such as a state with an inferiority or superiority of walls for either of the opponents...
-        # Implement heuristic that considers the best path between each player and their respective goal position...
         

@@ -65,25 +65,25 @@ class GreedyAgent(Agent):
             # find valid walls in front of opponent
             candidate_walls = []
             if oppo_goal_y < oppo_y:
-                print("opponent moving north")
+                print("opponent moving north (greedy_player's turn)")
                 for wall_action in wall_actions:
                     wall_dir, wall_y, wall_x = wall_action
                     if wall_dir == 'WH' and wall_y == oppo_y - 1 and wall_x in (oppo_x, oppo_x - 1):
                         candidate_walls.append(wall_action)
             else:
-                print("opponent moving south")
+                print("opponent moving south  (greedy_player's turn)")
                 for wall_action in wall_actions:
                     wall_dir, wall_y, wall_x = wall_action
                     if wall_dir == 'WH' and wall_y == oppo_y and wall_x in (oppo_x, oppo_x - 1):
                         candidate_walls.append(wall_action)
-            print(f"candidate walls: {candidate_walls}")
+            print(f"candidate walls  (greedy_player's turn) : {candidate_walls}")
 
             if len(candidate_walls) > 0:
                 choice = random.choice(candidate_walls)
-                print(f"placing a wall: {choice}")
+                print(f"placing a wall  (greedy_player's turn) : {choice}")
                 return choice
             else:
-                print(f"cannot put a wall in front of opponent. will move pawn instead.")
+                print(f"cannot put a wall in front of opponent. will move pawn instead.  (greedy_player's turn)")
 
         # if I reach this line, either we didn't try to put a wall,
         # or it's not possible to put a wall in front of opponent.
